@@ -1,0 +1,33 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "REST API - EDT IUT",
+  "main": "index.js",
+  "repository": "git@github.com:Mitotow/UniSchedule.git",
+  "author": "Thomas AMBROISE <thomas@ambroise.io>",
+  "license": "MIT",
+  "scripts": {
+    "build": "npx tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon --ignore data/ ./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.14",
+    "@types/express": "^4.17.18",
+    "@types/ical": "^0.8.1",
+    "@types/node": "^20.7.0",
+    "@types/xml2js": "^0.4.12",
+    "axios": "^1.5.0",
+    "cors": "^2.8.5",
+    "css-select": "^5.1.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "he": "^1.2.0",
+    "http-status-ts": "^2.0.1",
+    "ical": "^0.8.0",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "xml2js": "^0.6.2"
+  }
+}

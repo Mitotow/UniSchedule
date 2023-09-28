@@ -1,0 +1,9 @@
+<div class="search">
+    <div class="search-bar">
+        <input type="text" [(ngModel)]="inputState" #inputElement (input)="onInputChange(inputElement.value)">
+    </div>
+    <div class="search-sep"></div>
+    <ul class="search-list">
+        <li class="search-list-el" *ngFor="let g of filteredGroups"><button (click)="goTo('schedule/'+g.group.$.id)" [textContent]="g.group.name"></button></li>
+    </ul>
+</div>

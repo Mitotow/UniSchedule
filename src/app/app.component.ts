@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { ApiGroupsService } from './api-groups.service';
+import GroupSchedule from 'src/interfaces/GroupSchedule';
+
 
 @Component({
   selector: 'app-root',
@@ -6,5 +9,4 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'client';
 }

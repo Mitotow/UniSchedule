@@ -23,6 +23,10 @@ export default class Logger {
         fs.writeFileSync(this.plog, '');
     }
 
+    /**
+     * 
+     * @returns Logger instance
+     */
     public static getInstance(): Logger {
         if(!Logger.instance) {
             Logger.instance = new Logger();
@@ -30,10 +34,18 @@ export default class Logger {
         return Logger.instance;
     }
 
+    /**
+     * 
+     * @param str - Message
+     */
     public info(...str:string[]):void {
         this.write(this.types.info, str.join(' '));
     }
 
+    /**
+     * 
+     * @param str - Message
+     */
     public trace(...str : string[]): void {
         const error = new Error(str.join(' '));
         error.name = '';
@@ -49,15 +61,31 @@ export default class Logger {
             this.write(this.types.trace, 'No stack found');
     }
 
-    public error(err:Error, ...str:string[]) {
-        this.write(this.types.error, err.stack?err.stack:`${err.name}: ${err.message}`, str.join(' '));
+    /**
+     * 
+     * @param str - Message
+     */
+    public warn(...str : string[]): void {
+        this.write(this.types.warn, str.join(' '));
     }
 
-    public write(type:string[], ...str:string[]): void {
+    /**
+     * 
+     * @param err - Error
+     */
+    public error(err:any) {
+        if(err instanceof Error) {
+            this.write(this.types.error, err.stack?err.stack.split('\n').join('\n\t'):`${err.name}: ${err.message}`);
+        } else {
+            this.write(this.types.error, err);
+        }
+    }
+
+    private write(type:string[], ...str:string[]): void {
         const message = str.join(' ');
         const date = this.getDateString();
-        console.log(`${date} ${type[0]}: ${message}`);
-        fs.writeFileSync(this.plog, `${date} ${type[1]}: ${message}`);
+        console.log(`[${date}] [${type[0]}] ${message}`);
+        fs.writeFileSync(this.plog, `[${date}] [${type[1]}] ${message}`);
     }
 
     private getDateString(): string {

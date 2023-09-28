@@ -1,7 +1,6 @@
 import IController from "../interfaces/IController";
 import {Router, Request, Response, NextFunction} from 'express';
 import Data from "../providers/Data";
-import Ical from "../tools/Ical";
 import Logger from "../providers/Logger";
 
 class ControllerGroups implements IController {
@@ -23,7 +22,7 @@ class ControllerGroups implements IController {
     private async getGroupSchedule(req:Request, res:Response, next:NextFunction) {
         const spath = req.path.split('/');
         const id = spath[spath.length-1];
-        const schedule = this.data.getSchedule(id);
+        const schedule = await this.data.getGroup(id);
         if(schedule == undefined) {
             res.status(404);
         } else {

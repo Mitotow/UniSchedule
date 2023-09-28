@@ -1,11 +1,8 @@
 import axios from 'axios';
 import ical, { FullCalendar } from 'ical';
 import ICSEvent from '../interfaces/ICSEvent';
-import Logger from '../providers/Logger';
 
 export default class Ical {
-	private static logger = Logger.getInstance();
-
 	public static fromURL = async (url:string) : Promise<ICSEvent[] | null> => {
 		try {
 			const response = await axios.get(url);

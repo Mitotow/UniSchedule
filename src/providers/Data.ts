@@ -5,15 +5,14 @@ import xml2js from 'xml2js';
 import Logger from './Logger';
 import XMLData from '../interfaces/XMLData';
 import Ical from '../tools/Ical';
-import GroupSchedule from '../interfaces/GroupSchedule';
+import Group from '../interfaces/Group';
 
 export default class Data {
     private static instance : Data | null = null;
     private pdata = path.join(__dirname, '../../data');
     private logger = Logger.getInstance();
-    private groups : XMLData[] = [];
-    private schedules : GroupSchedule[] = [];
-    private scheduleUrl = 'https://edt.univ-nantes.fr/iut_nantes';
+    private scheduleUrl = 'https://edt.univ-nantes.fr/iut_nantes/';
+    private groupsData : Group[] = [];
 
     public static getInstance() : Data {
         if(this.instance == null) this.instance = new Data();
@@ -27,60 +26,45 @@ export default class Data {
             fs.mkdirSync(this.pdata);
         }
 
-        await this.fetchGroupsData();
-        setInterval(async () => {
-            await this.fetchGroupsData();
-        }, 108000000);
+        await this.fetchGroupsData();                                                       // Fetch groups data
+        setInterval(() => {
+            this.fetchGroupsData();                                                   // Fetch groups data every 30 minutes
+        }, 1800000);
     }
 
     private async fetchGroupsData() {
-        const pgroups = path.join(this.pdata, 'groups');
-        if(!fs.existsSync(pgroups)) {
-            fs.mkdirSync(pgroups);
-        }
-        await axios.get('https://edt.univ-nantes.fr/iut_nantes/finder.xml').then(raw => {
-            xml2js.parseString(raw.data, (err, result) => {
-                if(err) {
-                    this.logger.error(err);
-                    return;
+        try {
+            const raw = await axios.get('https://edt.univ-nantes.fr/iut_nantes/finder.xml');                    // Get content of finder page
+            const rawparse : {finder: {resource: any}} = await xml2js.parseStringPromise(raw.data);             // Parsing content into ts object
+            const data : XMLData[] = rawparse.finder.resource;                                                  // Get groups infos
+            this.groupsData = [];  
+
+            await Promise.all(data.filter(e => e.$.type == 'group').map(async (group) => {
+                const icsPath = path.join(this.scheduleUrl,`g${group.$.id}.ics`);                               // Path to .ics file
+                const res = await Ical.fromURL(icsPath);                                                        // Fetch group schedule
+                if(res != null) {
+                    let obj : Group = {group:group,schedule:res};                                
+                    this.groupsData.push(obj);
+                    this.logger.info(`Parsed group ${group.name}`);
+                    try {
+                        fs.writeFileSync(path.join(this.pdata, `${obj.group.$.id}.json`), JSON.stringify(obj)); // Store data in .json file
+                    } catch(err) {
+                        this.logger.error(err);                                                                 // Error while writing in file
+                    }
                 }
-                const data : XMLData[] = result.finder.resource;
-                this.groups = data.filter(g => g.$.type == 'group');
-                this.groups.forEach(g => {
-                    this.logger.info('Register group id', g.$.id.toString());
-                    fs.writeFileSync(path.join(pgroups, `${g.$.id}.json`), JSON.stringify(g));
-                    this.fetchSchedules(g);
-                });
-            });
-        }).catch(_ => {
-            return;
-        });
+            }));
+        } catch(err) {
+            this.logger.error(err);
+        }
+
+    }   
+
+    public getGroup(id:string) : Group | undefined {
+        return this.groupsData.find(g => g.group.$.id === id);
+    }
+
+    public getGroups() : Group[] {
+        return this.groupsData;
     }
     
-    private fetchSchedules(g:XMLData) {
-        const pSchedules = path.join(this.pdata, 'schedules');
-        if(!fs.existsSync(pSchedules)) {
-            fs.mkdirSync(pSchedules);
-        }
-
-        const id = g.$.id;
-        const spath = path.join(this.scheduleUrl, g.$.link);
-        Ical.fromURL(spath).then(schedule => {
-            if(schedule) {
-                this.logger.info(schedule.toString());
-                this.schedules.push({
-                    id: id,
-                    schedule: schedule,
-                });
-            }
-        });
-    }
-
-    public getGroups() : XMLData[] {
-        return this.groups;
-    };
-
-    public getSchedule(id:string) : GroupSchedule | undefined {
-        return this.schedules.find(s => s.id == id);
-    }
 }
